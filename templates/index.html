@@ -2,69 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CodeCollab✨Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MyCallCode Ultimate Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        :root { 
-            --glass: rgba(255, 255, 255, 0.12); 
-            --glass-thick: rgba(255, 255, 255, 0.2); 
-            --accent: #00f2fe; 
-            --danger: #ff4d4d; 
-            --bg: #0b0e14; 
-            --panel: #161b22;
-        }
-
+        :root { --glass: rgba(255, 255, 255, 0.12); --accent: #00f2fe; --danger: #ff4d4d; --bg: #0b0e14; --panel: #161b22; }
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; overflow: hidden; }
 
-        /* --- WIZARD --- */
-        #wizard-box { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1e293b, #0b0e14); z-index: 3000; padding: 20px; }
-        .card { background: var(--panel); border: 1px solid var(--glass); padding: 30px; border-radius: 28px; width: 100%; max-width: 450px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .step { display: none; }
-        .step.active { display: block; }
-        textarea#c-box { width: 100%; height: 120px; background: #000; color: var(--accent); border: 1px solid var(--glass); border-radius: 12px; padding: 12px; font-family: monospace; font-size: 10px; margin-top: 10px; resize: none; }
-        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        /* Setup Wizard */
+        #wizard-box { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1e293b, #0b0e14); z-index: 5000; padding: 20px; }
+        .card { background: var(--panel); border: 1px solid var(--glass); padding: 30px; border-radius: 24px; width: 100%; max-width: 450px; text-align: center; }
+        .step { display: none; } .step.active { display: block; }
+        textarea { width: 100%; height: 100px; background: #000; color: var(--accent); border: 1px solid var(--glass); border-radius: 12px; padding: 10px; font-size: 10px; margin-top: 10px; resize: none; word-break: break-all; }
+        .btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 15px; }
         .btn-main { background: var(--accent); color: #000; }
 
-        /* --- MEETING UI --- */
+        /* Call UI & Workspace */
         #meeting-ui { display: none; width: 100vw; height: 100vh; flex-direction: column; }
+        .navbar { height: 60px; background: #0d1117; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--glass); }
         
-        .top-nav { 
-            height: 60px; background: #0d1117; display: flex; align-items: center; 
-            padding: 0 20px; border-bottom: 1px solid var(--glass); gap: 10px;
-        }
-
-        .main-layout { display: flex; flex: 1; overflow: hidden; }
-
-        /* Sidebar & Editor */
+        .main-content { display: flex; flex: 1; overflow: hidden; }
         .sidebar { width: 220px; background: #0d1117; border-right: 1px solid var(--glass); display: flex; flex-direction: column; transition: 0.3s; }
         .file-list { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; }
-        .file-item { padding: 8px; cursor: pointer; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .file-item { padding: 8px; cursor: pointer; border-radius: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; transition: 0.2s; }
         .file-item:hover { background: var(--glass); }
-        .editor-container { flex: 1; position: relative; display: flex; flex-direction: column; background: #1e1e1e; }
-        #code-editor { flex: 1; width: 100%; background: transparent; color: #d4d4d4; border: none; padding: 20px; font-family: 'Consolas', monospace; font-size: 14px; outline: none; resize: none; line-height: 1.5; }
+
+        .editor-stage { flex: 1; position: relative; background: #1e1e1e; display: flex; flex-direction: column; }
+        #code-editor { flex: 1; width: 100%; height: 100%; background: transparent; color: #d4d4d4; border: none; padding: 25px; font-family: 'Consolas', monospace; font-size: 14px; outline: none; resize: none; tab-size: 4; line-height: 1.6; }
+        
+        /* Remote Cursor Indicator */
+        #remote-cursor { position: absolute; width: 2px; height: 22px; background: #ff9800; pointer-events: none; display: none; transition: all 0.1s linear; z-index: 10; }
+        #remote-cursor::after { content: 'Partner'; position: absolute; top: -18px; left: 0; background: #ff9800; color: #000; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
 
         /* Video Overlays */
-        .video-overlay { position: absolute; top: 70px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; pointer-events: none; }
-        .video-box { width: 180px; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid var(--glass-thick); pointer-events: auto; }
+        .video-box { position: absolute; width: 180px; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid var(--glass); z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #remote-v-box { top: 80px; right: 20px; }
+        #local-v-box { bottom: 100px; right: 20px; cursor: move; touch-action: none; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        #local-container { cursor: move; touch-action: none; }
 
-        /* Responsive Control Bar */
-        .control-bar { 
-            height: 85px; background: #161b22; display: flex; align-items: center; 
-            justify-content: center; gap: 15px; border-top: 1px solid var(--glass);
-            padding-bottom: calc(10px + env(safe-area-inset-bottom)); /* Dynamic Margin */
-        }
-        .c-btn { width: 50px; height: 50px; border-radius: 50%; border: none; background: #30363d; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        /* Bottom Control Bar */
+        .control-bar { height: 85px; background: #161b22; display: flex; align-items: center; justify-content: center; gap: 15px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--glass); }
+        .c-btn { width: 50px; height: 50px; border-radius: 50%; border: none; background: #30363d; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .c-btn.off { background: var(--danger); }
+        .btn-end { background: var(--danger); width: 65px; border-radius: 15px; }
 
         @media (max-width: 768px) {
-            .sidebar { width: 0; opacity: 0; position: absolute; } /* Hide sidebar on mobile for space */
-            .video-box { width: 120px; }
-            .control-bar { gap: 8px; height: 100px; }
-            .c-btn { width: 44px; height: 44px; font-size: 16px; }
+            .sidebar { position: fixed; left: -220px; z-index: 1000; height: calc(100% - 145px); }
+            .sidebar.active { left: 0; }
+            .video-box { width: 110px; }
+            #local-v-box { bottom: 120px; }
+            .control-bar { gap: 8px; padding: 5px; }
         }
     </style>
 </head>
@@ -73,75 +61,71 @@
     <div id="wizard-box">
         <div class="card">
             <div id="step-1" class="step active">
-                <h1 style="color:var(--accent);">CodeCollab✨Pro</h1>
-                <button class="btn btn-main" onclick="startSetup('host')">Host Meeting</button>
-                <button class="btn btn-ghost" onclick="startSetup('guest')" style="margin-top:10px; background:var(--glass); color:white;">Join Meeting</button>
+                <h1 style="color:var(--accent);">GlassCall Pro</h1>
+                <button class="btn btn-main" onclick="initSetup('host')">Host Meeting</button>
+                <button class="btn btn-ghost" onclick="initSetup('guest')" style="margin-top:10px;">Join Meeting</button>
             </div>
-            <div id="h-step-1" class="step">
-                <h3>1. Share Code</h3>
-                <textarea id="h-out" readonly class="textarea-box"></textarea>
+            <div id="h-step" class="step">
+                <h3>Host Handshake</h3>
+                <textarea id="h-out" readonly></textarea>
                 <button class="btn btn-main" onclick="copy('h-out')">Copy Invite Code</button>
-                <button class="btn btn-ghost" onclick="showStep('h-step-2')" style="margin-top:10px; background:var(--glass); color:white;">Next: I have Response</button>
+                <textarea id="h-in" placeholder="Paste partner code here..." style="margin-top:15px;"></textarea>
+                <button class="btn btn-main" onclick="finalizeHost()" style="margin-top:10px;">Establish Tunnel</button>
             </div>
-            <div id="h-step-2" class="step">
-                <h3>2. Finalize</h3>
-                <textarea id="h-in" placeholder="Paste Response here..."></textarea>
-                <button class="btn btn-main" onclick="connectHost()">Connect Now</button>
-            </div>
-            <div id="g-step-1" class="step">
-                <h3>1. Paste Invite</h3>
-                <textarea id="g-in" placeholder="Paste Invite here..."></textarea>
-                <button class="btn btn-main" onclick="generateGuestAnswer()">Generate Response</button>
-            </div>
-            <div id="g-step-2" class="step">
-                <h3>2. Send Back</h3>
-                <textarea id="g-out" readonly></textarea>
-                <button class="btn btn-main" onclick="copy('g-out')">Copy Response Code</button>
+            <div id="g-step" class="step">
+                <h3>Guest Handshake</h3>
+                <textarea id="g-in" placeholder="Paste host code here..."></textarea>
+                <button class="btn btn-main" onclick="genGuestAnswer()">Verify & Generate</button>
+                <textarea id="g-out" readonly style="margin-top:15px;"></textarea>
+                <button class="btn btn-main" onclick="copy('g-out')" style="margin-top:10px;">Copy Answer</button>
             </div>
         </div>
     </div>
 
     <div id="meeting-ui">
-        <nav class="top-nav">
-            <div style="font-size:12px; color:var(--accent)">Strength: OK</div>
-            <div style="flex:1; text-align:center; font-weight:bold; letter-spacing:1px;">MYCALLCODE</div>
-            <input type="file" id="folderInput" webkitdirectory directory multiple style="display:none" onchange="loadFolder(event)">
-            <button onclick="document.getElementById('folderInput').click()" style="background:var(--glass-thick); border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:11px; color:white;">📁 Upload</button>
-            <button onclick="downloadZip()" style="background:var(--accent); border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:11px; color:black; font-weight:bold;">📥 Download</button>
+        <nav class="navbar">
+            <div style="font-size:12px;">Strength: <span id="strength-val" style="color:var(--accent)">Excellent</span></div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="document.getElementById('dirIn').click()" style="background:var(--accent); border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:11px;">Upload Folder</button>
+                <button onclick="downloadAsZip()" style="background:var(--glass-thick); border:1px solid var(--accent); color:var(--accent); padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:11px;">Download ZIP</button>
+                <input type="file" id="dirIn" webkitdirectory directory multiple style="display:none" onchange="loadFolder(event)">
+            </div>
+            <button onclick="togglePip()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">🖼️</button>
         </nav>
 
-        <div class="main-layout">
+        <div class="main-content">
             <div class="sidebar" id="sidebar">
+                <div style="padding:15px; font-size:11px; opacity:0.5; border-bottom:1px solid var(--glass);">EXPLORER</div>
                 <div id="file-tree" class="file-list"></div>
             </div>
-            <div class="editor-container">
-                <textarea id="code-editor" spellcheck="false" oninput="handleCodeInput()" placeholder="// Click Upload Folder to start collaborating..."></textarea>
+            <div class="editor-stage">
+                <div id="remote-cursor"></div>
+                <textarea id="code-editor" spellcheck="false" oninput="syncCode()" onkeyup="syncCursor()" onclick="syncCursor()" placeholder="// Select a file from sidebar to start..."></textarea>
             </div>
         </div>
 
-        <div class="video-overlay">
-            <div class="video-box"><video id="remoteVideo" autoplay playsinline></video></div>
-            <div id="local-container" class="video-box"><video id="localVideo" autoplay muted playsinline></video></div>
-        </div>
+        <div class="video-box" id="remote-v-box"><video id="remoteVideo" autoplay playsinline></video></div>
+        <div class="video-box" id="local-v-box"><video id="localVideo" autoplay muted playsinline></video></div>
 
         <div class="control-bar">
+            <button onclick="toggleSidebar()" class="c-btn" id="side-btn">📁</button>
             <button onclick="toggleMic()" id="mic-btn" class="c-btn">🎤</button>
             <button onclick="toggleCam()" id="cam-btn" class="c-btn">📷</button>
-            <button onclick="downloadZip()" class="c-btn">💾</button>
             <button onclick="toggleShare()" id="share-btn" class="c-btn">📺</button>
-            <button onclick="location.reload()" class="c-btn" style="background:var(--danger)">📞</button>
+            <button onclick="hangup()" class="c-btn btn-end">📞</button>
         </div>
     </div>
 
     <script>
-        let pc, localStream, dataChannel, currentFile = null;
-        let filesData = {}; 
+        let pc, localStream, dataChannel, currentFile = null, filesData = {}, screenStream;
         const ice = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        const editor = document.getElementById('code-editor');
+        const remoteCursor = document.getElementById('remote-cursor');
 
-        function showStep(id) { document.querySelectorAll('.step').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
         function copy(id) { const t = document.getElementById(id); t.select(); document.execCommand('copy'); alert("Copied!"); }
+        function showStep(id) { document.querySelectorAll('.step').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 
-        async function startSetup(role) {
+        async function initSetup(role) {
             localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
             document.getElementById('localVideo').srcObject = localStream;
             pc = new RTCPeerConnection(ice);
@@ -149,122 +133,105 @@
 
             if(role === 'host') {
                 dataChannel = pc.createDataChannel("collab");
-                setupDataHandlers();
-                showStep('h-step-1');
+                setupData();
+                showStep('h-step');
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
                 pc.onicecandidate = e => { if(!e.candidate) document.getElementById('h-out').value = btoa(JSON.stringify(pc.localDescription)); };
             } else {
-                pc.ondatachannel = e => { dataChannel = e.channel; setupDataHandlers(); };
-                showStep('g-step-1');
+                pc.ondatachannel = e => { dataChannel = e.channel; setupData(); };
+                showStep('g-step');
             }
-            pc.onconnectionstatechange = () => { if(pc.connectionState === 'connected') { document.getElementById('wizard-box').style.display='none'; document.getElementById('meeting-ui').style.display='flex'; } };
+            pc.onconnectionstatechange = () => { if(pc.connectionState === 'connected') { document.getElementById('wizard-box').style.display='none'; document.getElementById('meeting-ui').style.display='flex'; startStats(); } };
             pc.ontrack = e => document.getElementById('remoteVideo').srcObject = e.streams[0];
         }
 
-        async function generateGuestAnswer() {
+        async function genGuestAnswer() {
             const offer = JSON.parse(atob(document.getElementById('g-in').value));
             await pc.setRemoteDescription(new RTCSessionDescription(offer));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
-            showStep('g-step-2');
             pc.onicecandidate = e => { if(!e.candidate) document.getElementById('g-out').value = btoa(JSON.stringify(pc.localDescription)); };
         }
 
-        async function connectHost() {
+        async function finalizeHost() {
             const answer = JSON.parse(atob(document.getElementById('h-in').value));
             await pc.setRemoteDescription(new RTCSessionDescription(answer));
         }
 
-        function setupDataHandlers() {
+        // Collaboration Engine
+        function setupData() {
             dataChannel.onmessage = e => {
                 const msg = JSON.parse(e.data);
-                if (msg.type === 'code') {
+                if(msg.type==='code' && msg.file===currentFile) {
+                    const pos = editor.selectionStart;
+                    editor.value = msg.val;
+                    editor.setSelectionRange(pos, pos);
                     filesData[msg.file] = msg.val;
-                    if (msg.file === currentFile) {
-                        const start = document.getElementById('code-editor').selectionStart;
-                        document.getElementById('code-editor').value = msg.val;
-                        document.getElementById('code-editor').setSelectionRange(start, start);
-                    }
                 }
-                if (msg.type === 'file-sync') {
-                    filesData = msg.files;
-                    renderFileTree();
-                }
+                if(msg.type==='cursor' && msg.file===currentFile) drawCursor(msg.pos);
+                if(msg.type==='sync') { filesData = msg.files; renderTree(); }
+                if(msg.type==='hangup') location.reload();
             };
         }
 
-        function handleCodeInput() {
-            if (!currentFile) return;
-            const val = document.getElementById('code-editor').value;
-            filesData[currentFile] = val;
-            dataChannel.send(JSON.stringify({ type: 'code', file: currentFile, val: val }));
+        function syncCode() { if(!currentFile) return; filesData[currentFile]=editor.value; dataChannel.send(JSON.stringify({type:'code', file:currentFile, val:editor.value})); }
+        function syncCursor() { if(!currentFile) return; dataChannel.send(JSON.stringify({type:'cursor', file:currentFile, pos:editor.selectionStart})); }
+
+        function drawCursor(pos) {
+            const lines = editor.value.substring(0, pos).split("\n");
+            const top = (lines.length - 1) * 22.4 + 25; // Line height calc
+            remoteCursor.style.display = 'block';
+            remoteCursor.style.top = top + 'px';
+            // Vertical cursor alignment logic
         }
 
+        // Folder & ZIP Handling
         async function loadFolder(e) {
             const files = e.target.files;
-            for (let file of files) {
-                filesData[file.webkitRelativePath] = await file.text();
-            }
-            renderFileTree();
-            dataChannel.send(JSON.stringify({ type: 'file-sync', files: filesData }));
+            for(let f of files) { filesData[f.webkitRelativePath] = await f.text(); }
+            renderTree();
+            dataChannel.send(JSON.stringify({type:'sync', files: filesData}));
         }
 
-        function renderFileTree() {
+        function renderTree() {
             const tree = document.getElementById('file-tree');
             tree.innerHTML = '';
-            Object.keys(filesData).forEach(path => {
+            Object.keys(filesData).sort().forEach(path => {
                 const item = document.createElement('div');
                 item.className = 'file-item';
-                item.innerText = '📄 ' + path.split('/').pop();
-                item.onclick = () => {
-                    currentFile = path;
-                    document.getElementById('code-editor').value = filesData[path];
-                };
+                item.innerText = path.split('/').pop();
+                item.onclick = () => { currentFile=path; editor.value=filesData[path]; editor.placeholder=`Editing: ${path}`; syncCursor(); };
                 tree.appendChild(item);
             });
         }
 
-        // FOLDER DOWNLOAD LOGIC
-        async function downloadZip() {
-            if (Object.keys(filesData).length === 0) return alert("No files to download!");
+        async function downloadAsZip() {
             const zip = new JSZip();
-            Object.keys(filesData).forEach(path => {
-                zip.file(path, filesData[path]);
-            });
+            Object.keys(filesData).forEach(path => zip.file(path, filesData[path]));
             const content = await zip.generateAsync({type:"blob"});
             const link = document.createElement('a');
             link.href = URL.createObjectURL(content);
-            link.download = "Project_Export.zip";
+            link.download = "GlassCall_Project.zip";
             link.click();
         }
 
-        // Draggable script (remains unchanged as it was perfect)
-        const box = document.getElementById("local-container");
-        let dragging = false, oX, oY, curX=0, curY=0;
-        const s = (e) => { 
-            const clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
-            const clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
-            oX = clientX - curX; oY = clientY - curY; 
-            if(e.target === box || box.contains(e.target)) dragging = true; 
-        };
-        const m = (e) => { if(dragging) { 
-            e.preventDefault(); 
-            const clientX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
-            const clientY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
-            curX = clientX - oX; curY = clientY - oY; 
-            box.style.transform = `translate3d(${curX}px, ${curY}px, 0)`; 
-        } };
-        document.addEventListener("touchstart", s, {passive:false}); document.addEventListener("touchmove", m, {passive:false}); document.addEventListener("touchend", () => dragging=false);
-        document.addEventListener("mousedown", s); document.addEventListener("mousemove", m); document.addEventListener("mouseup", () => dragging=false);
+        // UI & Drag
+        const box = document.getElementById("local-v-box");
+        let drg=false, oX, oY, cX=0, cY=0;
+        const st = (e) => { const ev = e.type==='touchstart'?e.touches[0]:e; oX=ev.clientX-cX; oY=ev.clientY-cY; if(e.target===box || box.contains(e.target)) drg=true; };
+        const mv = (e) => { if(!drg) return; e.preventDefault(); const ev = e.type==='touchmove'?e.touches[0]:e; cX=ev.clientX-oX; cY=ev.clientY-oY; box.style.transform=`translate3d(${cX}px, ${cY}px, 0)`; };
+        document.addEventListener("touchstart", st, {passive:false}); document.addEventListener("touchmove", mv, {passive:false}); document.addEventListener("touchend", ()=>drg=false);
+        document.addEventListener("mousedown", st); document.addEventListener("mousemove", mv); document.addEventListener("mouseup", ()=>drg=false);
 
         function toggleMic() { localStream.getAudioTracks()[0].enabled = !localStream.getAudioTracks()[0].enabled; document.getElementById('mic-btn').classList.toggle('off'); }
         function toggleCam() { localStream.getVideoTracks()[0].enabled = !localStream.getVideoTracks()[0].enabled; document.getElementById('cam-btn').classList.toggle('off'); }
-        async function toggleShare() {
-            const screen = await navigator.mediaDevices.getDisplayMedia({video: true});
-            pc.getSenders().find(s => s.track.kind === 'video').replaceTrack(screen.getVideoTracks()[0]);
-            document.getElementById('share-btn').classList.add('off');
-        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+        function hangup() { if(dataChannel) dataChannel.send(JSON.stringify({type:'hangup'})); setTimeout(()=>location.reload(), 300); }
+        function startStats() { setInterval(async () => { const s = await pc.getStats(); s.forEach(r => { if(r.type==='candidate-pair' && r.state==='succeeded') document.getElementById('strength-val').innerText = (r.currentRoundTripTime * 1000).toFixed(0) + "ms"; }); }, 3000); }
+        async function togglePip() { try { await document.getElementById('remoteVideo').requestPictureInPicture(); } catch(e){} }
+        async function toggleShare() { if(!screenStream) { screenStream = await navigator.mediaDevices.getDisplayMedia({video: true}); const vt = screenStream.getVideoTracks()[0]; pc.getSenders().find(s => s.track.kind === 'video').replaceTrack(vt); vt.onended = stopShare; document.getElementById('share-btn').classList.add('off'); } else stopShare(); }
+        function stopShare() { pc.getSenders().find(s => s.track.kind === 'video').replaceTrack(localStream.getVideoTracks()[0]); if(screenStream) screenStream.getTracks().forEach(t => t.stop()); screenStream = null; document.getElementById('share-btn').classList.remove('off'); }
     </script>
 </body>
 </html>
