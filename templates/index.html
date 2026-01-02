@@ -3,62 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MyCallCode✨Pro</title>
+    <title>CodeCollab✨Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root { 
-            --glass: rgba(255, 255, 255, 0.15); 
+            --glass: rgba(255, 255, 255, 0.12); 
+            --glass-thick: rgba(255, 255, 255, 0.2); 
             --accent: #00f2fe; 
             --danger: #ff4d4d; 
             --bg: #0b0e14; 
             --panel: #161b22;
         }
 
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; overflow: hidden; }
 
-        /* --- SETUP WIZARD (Same as before) --- */
-        #wizard-box { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1e293b, #0b0e14); z-index: 2000; padding: 20px; }
-        .card { background: var(--panel); border: 1px solid var(--glass); padding: 30px; border-radius: 24px; width: 100%; max-width: 450px; text-align: center; }
+        /* --- WIZARD --- */
+        #wizard-box { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1e293b, #0b0e14); z-index: 3000; padding: 20px; }
+        .card { background: var(--panel); border: 1px solid var(--glass); padding: 30px; border-radius: 28px; width: 100%; max-width: 450px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         .step { display: none; }
         .step.active { display: block; }
-        textarea { width: 100%; height: 120px; background: #000; color: var(--accent); border: 1px solid var(--glass); border-radius: 12px; padding: 12px; font-family: monospace; font-size: 11px; margin-top: 10px; resize: none; }
-        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        textarea#c-box { width: 100%; height: 120px; background: #000; color: var(--accent); border: 1px solid var(--glass); border-radius: 12px; padding: 12px; font-family: monospace; font-size: 10px; margin-top: 10px; resize: none; }
+        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-main { background: var(--accent); color: #000; }
 
-        /* --- MAIN INTERFACE --- */
+        /* --- MEETING UI --- */
         #meeting-ui { display: none; width: 100vw; height: 100vh; flex-direction: column; }
         
+        .top-nav { 
+            height: 60px; background: #0d1117; display: flex; align-items: center; 
+            padding: 0 20px; border-bottom: 1px solid var(--glass); gap: 10px;
+        }
+
         .main-layout { display: flex; flex: 1; overflow: hidden; }
 
-        /* File Explorer */
-        .sidebar { width: 200px; background: #0d1117; border-right: 1px solid var(--glass); display: flex; flex-direction: column; }
+        /* Sidebar & Editor */
+        .sidebar { width: 220px; background: #0d1117; border-right: 1px solid var(--glass); display: flex; flex-direction: column; transition: 0.3s; }
         .file-list { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; }
-        .file-item { padding: 5px; cursor: pointer; border-radius: 4px; overflow: hidden; white-space: nowrap; }
+        .file-item { padding: 8px; cursor: pointer; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .file-item:hover { background: var(--glass); }
-
-        /* Editor Area */
         .editor-container { flex: 1; position: relative; display: flex; flex-direction: column; background: #1e1e1e; }
-        #code-editor { flex: 1; width: 100%; background: transparent; color: #d4d4d4; border: none; padding: 20px; font-family: 'Consolas', monospace; font-size: 14px; outline: none; resize: none; tab-size: 4; }
-        
-        /* Remote Cursor Overlay */
-        #remote-cursor { position: absolute; width: 2px; height: 20px; background: orange; pointer-events: none; display: none; }
-        #remote-cursor::after { content: 'Partner'; position: absolute; top: -18px; left: 0; background: orange; color: black; font-size: 10px; padding: 1px 4px; border-radius: 3px; }
+        #code-editor { flex: 1; width: 100%; background: transparent; color: #d4d4d4; border: none; padding: 20px; font-family: 'Consolas', monospace; font-size: 14px; outline: none; resize: none; line-height: 1.5; }
 
-        /* Video Stage (Floating Right) */
-        .video-overlay { position: absolute; top: 80px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; pointer-events: none; }
-        .video-box { width: 200px; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid var(--glass); pointer-events: auto; position: relative; }
+        /* Video Overlays */
+        .video-overlay { position: absolute; top: 70px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; pointer-events: none; }
+        .video-box { width: 180px; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid var(--glass-thick); pointer-events: auto; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        
         #local-container { cursor: move; touch-action: none; }
 
-        .control-bar { height: 70px; background: #161b22; display: flex; align-items: center; justify-content: center; gap: 15px; border-top: 1px solid var(--glass); padding-bottom: env(safe-area-inset-bottom); }
-        .c-btn { width: 45px; height: 45px; border-radius: 50%; border: none; background: #30363d; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        /* Responsive Control Bar */
+        .control-bar { 
+            height: 85px; background: #161b22; display: flex; align-items: center; 
+            justify-content: center; gap: 15px; border-top: 1px solid var(--glass);
+            padding-bottom: calc(10px + env(safe-area-inset-bottom)); /* Dynamic Margin */
+        }
+        .c-btn { width: 50px; height: 50px; border-radius: 50%; border: none; background: #30363d; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .c-btn.off { background: var(--danger); }
-        
+
         @media (max-width: 768px) {
-            .sidebar { display: none; }
+            .sidebar { width: 0; opacity: 0; position: absolute; } /* Hide sidebar on mobile for space */
             .video-box { width: 120px; }
+            .control-bar { gap: 8px; height: 100px; }
+            .c-btn { width: 44px; height: 44px; font-size: 16px; }
         }
     </style>
 </head>
@@ -67,50 +73,49 @@
     <div id="wizard-box">
         <div class="card">
             <div id="step-1" class="step active">
-                <h1 style="color:var(--accent);">MyCallCode✨Pro</h1>
+                <h1 style="color:var(--accent);">CodeCollab✨Pro</h1>
                 <button class="btn btn-main" onclick="startSetup('host')">Host Meeting</button>
-                <button class="btn btn-ghost" onclick="startSetup('guest')" style="margin-top:10px;">Join Meeting</button>
+                <button class="btn btn-ghost" onclick="startSetup('guest')" style="margin-top:10px; background:var(--glass); color:white;">Join Meeting</button>
             </div>
             <div id="h-step-1" class="step">
                 <h3>1. Share Code</h3>
-                <textarea id="h-out" readonly></textarea>
-                <button class="btn btn-main" onclick="copy('h-out')">Copy Code 1</button>
-                <button class="btn btn-ghost" onclick="showStep('h-step-2')" style="margin-top:10px;">Next: I have Code 2</button>
+                <textarea id="h-out" readonly class="textarea-box"></textarea>
+                <button class="btn btn-main" onclick="copy('h-out')">Copy Invite Code</button>
+                <button class="btn btn-ghost" onclick="showStep('h-step-2')" style="margin-top:10px; background:var(--glass); color:white;">Next: I have Response</button>
             </div>
             <div id="h-step-2" class="step">
                 <h3>2. Finalize</h3>
-                <textarea id="h-in" placeholder="Paste Code 2 here..."></textarea>
-                <button class="btn btn-main" onclick="connectHost()">Connect</button>
+                <textarea id="h-in" placeholder="Paste Response here..."></textarea>
+                <button class="btn btn-main" onclick="connectHost()">Connect Now</button>
             </div>
             <div id="g-step-1" class="step">
-                <h3>1. Receive Code</h3>
-                <textarea id="g-in" placeholder="Paste Code 1 here..."></textarea>
-                <button class="btn btn-main" onclick="generateGuestAnswer()">Generate Code 2</button>
+                <h3>1. Paste Invite</h3>
+                <textarea id="g-in" placeholder="Paste Invite here..."></textarea>
+                <button class="btn btn-main" onclick="generateGuestAnswer()">Generate Response</button>
             </div>
             <div id="g-step-2" class="step">
                 <h3>2. Send Back</h3>
                 <textarea id="g-out" readonly></textarea>
-                <button class="btn btn-main" onclick="copy('g-out')">Copy Code 2</button>
+                <button class="btn btn-main" onclick="copy('g-out')">Copy Response Code</button>
             </div>
         </div>
     </div>
 
     <div id="meeting-ui">
-        <nav class="top-nav" style="height:50px; background:#0d1117; display:flex; align-items:center; padding:0 20px; border-bottom:1px solid var(--glass);">
-            <div style="font-size:12px;">Strength: <span id="strength-val" style="color:var(--accent)">Excellent</span></div>
-            <div style="flex:1; text-align:center; font-weight:bold;">Collab Editor</div>
+        <nav class="top-nav">
+            <div style="font-size:12px; color:var(--accent)">Strength: OK</div>
+            <div style="flex:1; text-align:center; font-weight:bold; letter-spacing:1px;">MYCALLCODE</div>
             <input type="file" id="folderInput" webkitdirectory directory multiple style="display:none" onchange="loadFolder(event)">
-            <button onclick="document.getElementById('folderInput').click()" style="background:var(--accent); border:none; padding:5px 12px; border-radius:5px; cursor:pointer; font-size:12px; color:black; font-weight:bold;">Upload Folder</button>
+            <button onclick="document.getElementById('folderInput').click()" style="background:var(--glass-thick); border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:11px; color:white;">📁 Upload</button>
+            <button onclick="downloadZip()" style="background:var(--accent); border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:11px; color:black; font-weight:bold;">📥 Download</button>
         </nav>
 
         <div class="main-layout">
-            <div class="sidebar">
-                <div style="padding:10px; font-size:11px; border-bottom:1px solid var(--glass); opacity:0.5;">FILES</div>
+            <div class="sidebar" id="sidebar">
                 <div id="file-tree" class="file-list"></div>
             </div>
             <div class="editor-container">
-                <div id="remote-cursor"></div>
-                <textarea id="code-editor" spellcheck="false" oninput="handleCodeInput(event)" onkeyup="updateCursor()" onclick="updateCursor()" placeholder="// Select a file or start typing..."></textarea>
+                <textarea id="code-editor" spellcheck="false" oninput="handleCodeInput()" placeholder="// Click Upload Folder to start collaborating..."></textarea>
             </div>
         </div>
 
@@ -122,22 +127,19 @@
         <div class="control-bar">
             <button onclick="toggleMic()" id="mic-btn" class="c-btn">🎤</button>
             <button onclick="toggleCam()" id="cam-btn" class="c-btn">📷</button>
-            <button onclick="toggleChat()" class="c-btn">💬</button>
+            <button onclick="downloadZip()" class="c-btn">💾</button>
             <button onclick="toggleShare()" id="share-btn" class="c-btn">📺</button>
-            <button onclick="hangup()" class="c-btn" style="background:var(--danger)">📞</button>
+            <button onclick="location.reload()" class="c-btn" style="background:var(--danger)">📞</button>
         </div>
     </div>
 
     <script>
         let pc, localStream, dataChannel, currentFile = null;
-        let filesData = {}; // Store file contents
+        let filesData = {}; 
         const ice = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-        const editor = document.getElementById('code-editor');
-        const remoteCursor = document.getElementById('remote-cursor');
-
         function showStep(id) { document.querySelectorAll('.step').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-        function copy(id) { const t = document.getElementById(id); t.select(); document.execCommand('copy'); }
+        function copy(id) { const t = document.getElementById(id); t.select(); document.execCommand('copy'); alert("Copied!"); }
 
         async function startSetup(role) {
             localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
@@ -174,20 +176,16 @@
             await pc.setRemoteDescription(new RTCSessionDescription(answer));
         }
 
-        // --- COLLABORATION LOGIC ---
         function setupDataHandlers() {
             dataChannel.onmessage = e => {
                 const msg = JSON.parse(e.data);
                 if (msg.type === 'code') {
-                    if (msg.file === currentFile) {
-                        const start = editor.selectionStart;
-                        editor.value = msg.val;
-                        editor.setSelectionRange(start, start);
-                    }
                     filesData[msg.file] = msg.val;
-                }
-                if (msg.type === 'cursor' && msg.file === currentFile) {
-                    drawRemoteCursor(msg.pos);
+                    if (msg.file === currentFile) {
+                        const start = document.getElementById('code-editor').selectionStart;
+                        document.getElementById('code-editor').value = msg.val;
+                        document.getElementById('code-editor').setSelectionRange(start, start);
+                    }
                 }
                 if (msg.type === 'file-sync') {
                     filesData = msg.files;
@@ -196,32 +194,17 @@
             };
         }
 
-        function handleCodeInput(e) {
+        function handleCodeInput() {
             if (!currentFile) return;
-            filesData[currentFile] = editor.value;
-            dataChannel.send(JSON.stringify({ type: 'code', file: currentFile, val: editor.value }));
+            const val = document.getElementById('code-editor').value;
+            filesData[currentFile] = val;
+            dataChannel.send(JSON.stringify({ type: 'code', file: currentFile, val: val }));
         }
 
-        function updateCursor() {
-            if (!currentFile || !dataChannel) return;
-            dataChannel.send(JSON.stringify({ type: 'cursor', file: currentFile, pos: editor.selectionStart }));
-        }
-
-        function drawRemoteCursor(pos) {
-            // Very basic cursor positioning logic
-            const lines = editor.value.substr(0, pos).split("\n");
-            const top = (lines.length - 1) * 21 + 20; // 21 is approx line height
-            remoteCursor.style.display = 'block';
-            remoteCursor.style.top = top + 'px';
-            // Calculating 'left' is complex with textarea, for now we just show line sync
-        }
-
-        // --- FOLDER HANDLING ---
         async function loadFolder(e) {
             const files = e.target.files;
             for (let file of files) {
-                const content = await file.text();
-                filesData[file.webkitRelativePath] = content;
+                filesData[file.webkitRelativePath] = await file.text();
             }
             renderFileTree();
             dataChannel.send(JSON.stringify({ type: 'file-sync', files: filesData }));
@@ -233,29 +216,55 @@
             Object.keys(filesData).forEach(path => {
                 const item = document.createElement('div');
                 item.className = 'file-item';
-                item.innerText = path.split('/').pop();
-                item.onclick = () => openFile(path);
+                item.innerText = '📄 ' + path.split('/').pop();
+                item.onclick = () => {
+                    currentFile = path;
+                    document.getElementById('code-editor').value = filesData[path];
+                };
                 tree.appendChild(item);
             });
         }
 
-        function openFile(path) {
-            currentFile = path;
-            editor.value = filesData[path];
-            editor.placeholder = `Editing: ${path}`;
+        // FOLDER DOWNLOAD LOGIC
+        async function downloadZip() {
+            if (Object.keys(filesData).length === 0) return alert("No files to download!");
+            const zip = new JSZip();
+            Object.keys(filesData).forEach(path => {
+                zip.file(path, filesData[path]);
+            });
+            const content = await zip.generateAsync({type:"blob"});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = "Project_Export.zip";
+            link.click();
         }
 
-        // Draggable script
+        // Draggable script (remains unchanged as it was perfect)
         const box = document.getElementById("local-container");
         let dragging = false, oX, oY, curX=0, curY=0;
-        const s = (e) => { oX = (e.type==="touchstart"?e.touches[0].clientX:e.clientX) - curX; oY = (e.type==="touchstart"?e.touches[0].clientY:e.clientY) - curY; if(e.target === box || box.contains(e.target)) dragging = true; };
-        const m = (e) => { if(dragging) { e.preventDefault(); const clientX = e.type==="touchmove"?e.touches[0].clientX:e.clientX; const clientY = e.type==="touchmove"?e.touches[0].clientY:e.clientY; curX = clientX - oX; curY = clientY - oY; box.style.transform = `translate3d(${curX}px, ${curY}px, 0)`; } };
+        const s = (e) => { 
+            const clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
+            oX = clientX - curX; oY = clientY - curY; 
+            if(e.target === box || box.contains(e.target)) dragging = true; 
+        };
+        const m = (e) => { if(dragging) { 
+            e.preventDefault(); 
+            const clientX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
+            curX = clientX - oX; curY = clientY - oY; 
+            box.style.transform = `translate3d(${curX}px, ${curY}px, 0)`; 
+        } };
         document.addEventListener("touchstart", s, {passive:false}); document.addEventListener("touchmove", m, {passive:false}); document.addEventListener("touchend", () => dragging=false);
         document.addEventListener("mousedown", s); document.addEventListener("mousemove", m); document.addEventListener("mouseup", () => dragging=false);
 
         function toggleMic() { localStream.getAudioTracks()[0].enabled = !localStream.getAudioTracks()[0].enabled; document.getElementById('mic-btn').classList.toggle('off'); }
         function toggleCam() { localStream.getVideoTracks()[0].enabled = !localStream.getVideoTracks()[0].enabled; document.getElementById('cam-btn').classList.toggle('off'); }
-        function hangup() { location.reload(); }
+        async function toggleShare() {
+            const screen = await navigator.mediaDevices.getDisplayMedia({video: true});
+            pc.getSenders().find(s => s.track.kind === 'video').replaceTrack(screen.getVideoTracks()[0]);
+            document.getElementById('share-btn').classList.add('off');
+        }
     </script>
 </body>
 </html>
